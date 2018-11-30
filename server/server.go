@@ -96,6 +96,15 @@ func (s *UserServiceImp) DeleteByID(id int) error {
 	return nil
 }
 
+func (s *UserServiceImp) DeleteAccountByID(id int) error {
+	stmt := "DELETE FROM bank_account WHERE id = ?"
+	_, err := s.db.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *UserServiceImp) Update(id int, firstName string, lastName string) (*bank.User, error) {
 	stmt := "UPDATE user SET first_name = ?, last_name = ? WHERE id = ?"
 	_, err := s.db.Exec(stmt, firstName, lastName, id)
@@ -203,6 +212,14 @@ func (s *Server) DeleteByID(c *gin.Context) {
 	}
 }
 
+func (s *Server) DeleteAccountByID(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err := s.userService.DeleteAccountByID(id); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (s *Server) Update(c *gin.Context) {
 	h := map[string]string{}
 	if err := c.ShouldBindJSON(&h); err != nil {
@@ -223,6 +240,7 @@ type UserService interface {
 	Insert(user *bank.User) (int64, error)
 	GetByID(id int) (*bank.User, error)
 	DeleteByID(id int) error
+	DeleteAccountByID(id int) error
 	Update(id int, firstName string, lastName string) (*bank.User, error)
 	InsertAccount(bankAccount *bank.BankAccount) (int64, error)
 	GetAccountByID(id int) ([]bank.BankAccount, error)
@@ -235,6 +253,7 @@ type UserServiceImp struct {
 func setupRoute(s *Server) *gin.Engine {
 	r := gin.Default()
 	users := r.Group("/users")
+	bankAccounts := r.Group("/bankAccounts")
 	// admin := r.Group("/bankaccounts")
 
 	// admin.Use(gin.BasicAuth(gin.Accounts{
@@ -250,6 +269,8 @@ func setupRoute(s *Server) *gin.Engine {
 
 	users.POST("/:id/bankAccounts", s.CreateAccount)
 	users.GET("/:id/bankAccounts", s.GetAccountByID)
+
+	bankAccounts.DELETE("/:id", s.DeleteAccountByID)
 	return r
 }
 
