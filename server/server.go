@@ -78,7 +78,7 @@ func (s *UserServiceImp) GetAccountByID(id int) ([]bank.BankAccount, error) {
 	accounts := []bank.BankAccount{} // set empty slice without nil
 	for rows.Next() {
 		var account bank.BankAccount
-		err := rows.Scan(&account.UserID, &account.AccountNumber, &account.Name, &account.Balance)
+		err := rows.Scan(&account.ID, &account.UserID, &account.AccountNumber, &account.Name, &account.Balance)
 		if err != nil {
 			return nil, err
 		}
