@@ -47,10 +47,6 @@ func (s *UserServiceImp) Insert(user *bank.User) (int64, error) {
 		return 0, err
 	}
 	id, _ := res.LastInsertId()
-
-	// if err := row.Scan(&user.ID, &user.FirstName, &user.LastName); err != nil && err != sql.ErrNoRows {
-	// 	return err
-	// }
 	return id, nil
 }
 
