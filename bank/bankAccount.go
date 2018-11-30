@@ -1,9 +1,9 @@
 package bank
 
 type BankAccount struct {
-	ID            int
-	UserID        string
-	AccountNumber string
-	name          string
-	balance       int
+	ID            int    `json:"id"`
+	UserID        int    `json:"user_id"`
+	AccountNumber string `json:"account_number"`
+	Name          string `json:"name"`
+	Balance       int    `json:"balance"`
 }
