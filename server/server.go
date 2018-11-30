@@ -114,6 +114,24 @@ func (s *UserServiceImp) Update(id int, firstName string, lastName string) (*ban
 	return s.GetByID(id)
 }
 
+func (s *UserServiceImp) Withdraw(id int, amount int) error {
+	stmt := "UPDATE bank_account SET balance = balance - ? WHERE id = ?"
+	_, err := s.db.Exec(stmt, amount, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *UserServiceImp) Deposit(id int, amount int) error {
+	stmt := "UPDATE bank_account SET balance = balance + ? WHERE id = ?"
+	_, err := s.db.Exec(stmt, amount, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Server struct {
 	db          *sql.DB
 	userService UserService
@@ -235,6 +253,34 @@ func (s *Server) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (s *Server) Withdraw(c *gin.Context) {
+	h := map[string]int{}
+	if err := c.ShouldBindJSON(&h); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, err)
+		return
+	}
+	id, _ := strconv.Atoi(c.Param("id"))
+	err := s.userService.Withdraw(id, h["amount"])
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		return
+	}
+}
+
+func (s *Server) Deposit(c *gin.Context) {
+	h := map[string]int{}
+	if err := c.ShouldBindJSON(&h); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, err)
+		return
+	}
+	id, _ := strconv.Atoi(c.Param("id"))
+	err := s.userService.Deposit(id, h["amount"])
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		return
+	}
+}
+
 type UserService interface {
 	All() ([]bank.User, error)
 	Insert(user *bank.User) (int64, error)
@@ -244,6 +290,8 @@ type UserService interface {
 	Update(id int, firstName string, lastName string) (*bank.User, error)
 	InsertAccount(bankAccount *bank.BankAccount) (int64, error)
 	GetAccountByID(id int) ([]bank.BankAccount, error)
+	Withdraw(id int, amount int) error
+	Deposit(id int, amount int) error
 }
 
 type UserServiceImp struct {
@@ -271,6 +319,8 @@ func setupRoute(s *Server) *gin.Engine {
 	users.GET("/:id/bankAccounts", s.GetAccountByID)
 
 	bankAccounts.DELETE("/:id", s.DeleteAccountByID)
+	bankAccounts.PUT("/:id/withdraw", s.Withdraw)
+	bankAccounts.PUT("/:id/deposit", s.Deposit)
 	return r
 }
 
